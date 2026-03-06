@@ -1,21 +1,22 @@
 # MirAI_OS
 
-## Overview
-MirAI_OS is an advanced operating system that integrates various cutting-edge technologies to provide a seamless user experience.
+MirAI_OS is an advanced artificial intelligence operating system designed to integrate various functionalities such as communication, autonomous operations, and more.
 
 ## Features
-- Core orchestrator
-- Okabe personality engine
-- Telegram bot integration
-- LLM integration
-- Voice system
-- Self-modification capabilities
-- SSH/Codespaces integration
-- Kali tools
-- Windows executable installer
+- Telegram Bot with Okabe Personality
+- LLM Engine with OpenRouter Integration
+- Voice I/O with Sesame CSM
+- Autonomous Agent Flows
+- Self-Modification System
+- Kali Linux Integration
+- Codespace SSH Connector
+- Context Optimizer
+- Windows .exe Installer
 
 ## Installation
-Follow the instructions below to set up MirAI_OS on your machine.
+1. Clone the repository: `git clone https://github.com/andreygorban1582-dev/MirAI_OS.git`
+2. Install the requirements: `pip install -r requirements.txt`
+3. Run the application and configure according to your needs.
 
-## Usage
-Details on how to utilize different features of MirAI_OS will be provided here.
+## Contributing
+Feel free to open issues and submit pull requests to contribute!
