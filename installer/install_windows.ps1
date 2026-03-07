@@ -14,7 +14,7 @@
 # ============================================================
 
 param(
-    [string]$MiraiRepo  = "https://github.com/YOUR_USERNAME/MirAI_OS.git",
+    [string]$MiraiRepo  = "https://github.com/andreygorban1582-dev/MirAI_OS.git",
     [string]$WslDistro  = "kali-linux",
     [string]$MiraiDir   = "~/MirAI_OS",
     [switch]$SkipWsl    = $false,

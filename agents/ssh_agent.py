@@ -30,7 +30,8 @@ class SSHConnection:
     def connect(self) -> None:
         import paramiko
         self._client = paramiko.SSHClient()
-        self._client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self._client.load_system_host_keys()
+        self._client.set_missing_host_key_policy(paramiko.RejectPolicy())
         kwargs = {
             "hostname": self.host,
             "port": self.port,
