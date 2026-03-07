@@ -21,16 +21,30 @@ dist/
 build/
 .eggs/
 
-# Data (too large / private)
-data/vector_store/
-data/conversations/
-data/sessions/
-data/models/
+# Data (too large / private — use .gitkeep to preserve structure)
+data/vector_store/*
+data/conversations/*
+data/sessions/*
+data/models/*
 data/mirai.log
 *.log
 
-# Capabilities are committed (they're code)
+# Keep directory structure visible in repo
+!data/vector_store/.gitkeep
+!data/conversations/.gitkeep
+!data/sessions/.gitkeep
+!data/models/.gitkeep
+
+# Capabilities are ALWAYS committed (they're code, not data)
 !data/capabilities/
+!data/capabilities/**
+
+# PyInstaller build output (keep spec, ignore binary)
+dist/
+build/
+*.spec
+!installer/*.iss
+MirAI_OS.exe
 
 # OS
 .DS_Store

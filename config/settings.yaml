@@ -149,3 +149,66 @@ wsl:
   wslconfig_path: "%USERPROFILE%/.wslconfig"
   memory_limit: "14GB"          # leave 2GB for Windows
   processors: 8                  # all cores for Legion Go Z1 Extreme
+
+# ── Optional Integrations ───────────────────────────────────
+# Each section controls an optional enhancement.
+# Set enabled: true AND add the corresponding key in .env.
+integrations:
+
+  groq:
+    enabled: false              # Fastest free LLM (Llama 3.1 70B)
+    # Requires: GROQ_API_KEY in .env
+    # Free: 14,400 req/day | 6,000 tokens/min
+    # Signup: https://console.groq.com
+    preferred_for: ["fast", "short", "code"]
+
+  together:
+    enabled: false              # Large model access (Qwen 72B, Llama 70B)
+    # Requires: TOGETHER_API_KEY in .env
+    # Free: $1 credit on signup + some free models
+    # Signup: https://api.together.xyz
+    preferred_for: ["long", "complex"]
+
+  notdiamond:
+    enabled: false              # Auto-route to best model per query
+    # Requires: NOTDIAMOND_API_KEY in .env
+    # Free tier available
+    # Signup: https://app.notdiamond.ai
+
+  tavily:
+    enabled: false              # AI-optimized web search (better than scraping)
+    # Requires: TAVILY_API_KEY in .env
+    # Free: 1,000 searches/month
+    # Signup: https://tavily.com
+
+  mem0:
+    enabled: false              # Cloud memory persistence (survives reinstalls)
+    # Requires: MEM0_API_KEY in .env
+    # Free tier available
+    # Signup: https://mem0.ai
+    sync_to_cloud: true
+
+  qdrant:
+    enabled: false              # Cloud vector store (scales beyond local ChromaDB)
+    # Requires: QDRANT_URL and QDRANT_API_KEY in .env
+    # Free: 1GB at cloud.qdrant.io
+    # Signup: https://cloud.qdrant.io
+
+  cloudflare_tunnel:
+    enabled: false              # Expose MirAI to internet (no port forwarding)
+    # Option A: Quick tunnel (no account needed, temporary URL)
+    quick_tunnel: false         # Set true to auto-start temp tunnel on boot
+    # Option B: Named tunnel (permanent URL, requires Cloudflare account)
+    # Requires: CLOUDFLARE_TUNNEL_TOKEN in .env
+    # Free: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
+    auto_start: false           # Start tunnel automatically on MirAI boot
+
+  ngrok:
+    enabled: false              # Alternative tunnel (instant public URL)
+    # Requires: NGROK_AUTH_TOKEN in .env
+    # Free: 1 active tunnel, random URL per restart
+    # Paid: static subdomain (your-mirai.ngrok.io)
+    # Signup: https://ngrok.com
+    auto_start: false
+    # Optional static domain (paid):
+    domain: ""                  # e.g. "your-mirai.ngrok.io"

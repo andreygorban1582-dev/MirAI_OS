@@ -16,6 +16,7 @@ from typing import Optional
 
 from core.config import cfg
 from core.llm import llm
+from core.llm_router import llm_router
 from core.memory import memory
 from core.personality import OKABE_SYSTEM_PROMPT, personality
 
@@ -200,6 +201,36 @@ TOOL_MANIFEST = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search_tavily",
+            "description": "Search the web using Tavily AI search (better than DuckDuckGo, structured results)",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"},
+                    "topic": {"type": "string", "description": "Topic type: general or news"},
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "manage_tunnel",
+            "description": "Start or stop a public internet tunnel (Cloudflare or Ngrok) for external access",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string", "description": "start or stop"},
+                    "provider": {"type": "string", "description": "cloudflare or ngrok"},
+                },
+                "required": ["action"],
+            },
+        },
+    },
 ]
 
 
@@ -249,7 +280,7 @@ class Orchestrator:
         memory.record(session_id, "user", user_input)
 
         # Compress memory if needed (fire and forget)
-        asyncio.create_task(memory.maybe_compress(session_id, llm))
+        asyncio.create_task(memory.maybe_compress(session_id, llm_router))
 
         # Build context
         system_prompt = personality.get_system_prompt()
@@ -267,7 +298,7 @@ class Orchestrator:
 
         for iteration in range(max_iterations):
             try:
-                response_text = await llm.complete(messages, stream=False)
+                response_text = await llm_router.complete(messages, stream=False, task_hint="general")
             except Exception as e:
                 error_msg = f"The Organization has disrupted our communications: {e}"
                 logger.error(f"LLM error: {e}")
@@ -433,6 +464,43 @@ class Orchestrator:
                 )
                 return result.output or result.error or ""
 
+            elif tool_name == "web_search_tavily":
+                try:
+                    from integrations.tavily_search import tavily
+                    if tavily.is_available():
+                        return await tavily.search_formatted(
+                            args.get("query", ""),
+                            max_results=6,
+                        )
+                except Exception:
+                    pass
+                # Fallback to Playwright search
+                result = await self._web().run_tool("search", target=args.get("query", ""))
+                return result.output
+
+            elif tool_name == "manage_tunnel":
+                action = args.get("action", "start")
+                provider = args.get("provider", "cloudflare")
+                try:
+                    if provider == "ngrok":
+                        from integrations.ngrok_tunnel import ngrok_tunnel
+                        if action == "start":
+                            url = await ngrok_tunnel.start()
+                            return f"Ngrok tunnel: {url}" if url else "Ngrok failed to start."
+                        else:
+                            ngrok_tunnel.stop()
+                            return "Ngrok tunnel stopped."
+                    else:
+                        from integrations.cloudflare_tunnel import cloudflare_tunnel
+                        if action == "start":
+                            url = await cloudflare_tunnel.start()
+                            return f"Cloudflare tunnel: {url}" if url else "Cloudflare tunnel failed."
+                        else:
+                            cloudflare_tunnel.stop()
+                            return "Cloudflare tunnel stopped."
+                except Exception as e:
+                    return f"Tunnel error: {e}"
+
             else:
                 # Try dynamic capabilities
                 from pathlib import Path
@@ -460,7 +528,7 @@ class Orchestrator:
             "content": "You have reached the operation limit. Provide your final summary and answer now. Be concise.",
         })
         try:
-            return await llm.complete(messages, stream=False, max_tokens=2048)
+            return await llm_router.complete(messages, stream=False, max_tokens=2048)
         except Exception as e:
             return f"Operation complete. The Organization's interference was strong today: {e}"
 

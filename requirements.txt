@@ -48,3 +48,35 @@ numpy>=1.26.0
 
 # ── Optional: GPU acceleration (if available) ────────────────
 # torch>=2.3.0          # Uncomment if GPU available
+
+# ══════════════════════════════════════════════════════════════
+# ── OPTIONAL INTEGRATION DEPENDENCIES ─────────────────────────
+# Install only what you need (or install all with requirements-full.txt)
+# ══════════════════════════════════════════════════════════════
+
+# ── Groq (fastest free LLM) ──────────────────────────────────
+# pip install groq
+# groq>=0.9.0
+
+# ── Together.ai ──────────────────────────────────────────────
+# pip install together
+# together>=1.2.0
+
+# ── Tavily search ────────────────────────────────────────────
+# pip install tavily-python
+# tavily-python>=0.3.0
+
+# ── Mem0 cloud memory ────────────────────────────────────────
+# pip install mem0ai
+# mem0ai>=0.1.0
+
+# ── Qdrant cloud vector store ────────────────────────────────
+# pip install qdrant-client
+# qdrant-client>=1.9.0
+
+# ── Ngrok tunnel ─────────────────────────────────────────────
+# pip install ngrok
+# ngrok>=1.0.0
+
+# ── Cloudflare tunnel (CLI only — no Python package needed) ──
+# Install cloudflared binary: https://github.com/cloudflare/cloudflared/releases

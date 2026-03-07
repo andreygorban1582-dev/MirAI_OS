@@ -299,12 +299,43 @@ class MemoryManager:
         self.short = ShortTermMemory()
         self.medium = MediumTermMemory()
         self.long = LongTermMemory()
+        # Optional cloud backends (loaded lazily)
+        self._qdrant = None
+        self._mem0 = None
+
+    def _get_qdrant(self):
+        if self._qdrant is None:
+            try:
+                from integrations.qdrant_store import qdrant
+                self._qdrant = qdrant if qdrant.is_available() else False
+            except Exception:
+                self._qdrant = False
+        return self._qdrant if self._qdrant else None
+
+    def _get_mem0(self):
+        if self._mem0 is None:
+            try:
+                from integrations.mem0_memory import mem0
+                self._mem0 = mem0 if mem0.is_available() else False
+            except Exception:
+                self._mem0 = False
+        return self._mem0 if self._mem0 else None
 
     def record(self, session_id: str, role: str, content: str) -> None:
-        """Store a message in all applicable tiers."""
+        """Store a message in all applicable tiers (local + optional cloud)."""
         self.short.push(session_id, role, content)
         self.medium.store_message(session_id, role, content)
         self.long.store(session_id, role, content)
+        # Cloud backends (async, fire-and-forget)
+        import asyncio
+        qdrant = self._get_qdrant()
+        if qdrant:
+            asyncio.create_task(qdrant.store(session_id, role, content))
+        mem0 = self._get_mem0()
+        if mem0:
+            asyncio.create_task(
+                mem0.add([{"role": role, "content": content}], session_id=session_id)
+            )
 
     async def maybe_compress(self, session_id: str, llm_client) -> None:
         """If enough new messages have accumulated, compress into a summary."""
@@ -349,8 +380,30 @@ class MemoryManager:
         """
         messages: list[dict] = [{"role": "system", "content": system_prompt}]
 
-        # Long-term relevant memories
-        relevant = self.long.retrieve(current_query, session_id=session_id, top_k=8)
+        # Long-term relevant memories — try Qdrant cloud first, then local ChromaDB
+        qdrant = self._get_qdrant()
+        if qdrant:
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+                relevant = loop.run_until_complete(qdrant.retrieve(current_query, session_id=session_id, top_k=8))
+            except Exception:
+                relevant = self.long.retrieve(current_query, session_id=session_id, top_k=8)
+        else:
+            relevant = self.long.retrieve(current_query, session_id=session_id, top_k=8)
+
+        # Also check Mem0 cloud memories
+        mem0 = self._get_mem0()
+        if mem0:
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+                cloud_mems = loop.run_until_complete(mem0.search_formatted(current_query))
+                if cloud_mems:
+                    messages.append({"role": "system", "content": cloud_mems})
+            except Exception:
+                pass
+
         if relevant:
             memory_text = "\n---\n".join(relevant[:5])
             messages.append({
