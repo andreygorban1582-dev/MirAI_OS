@@ -1,0 +1,24 @@
+# Byte-compiled / optimised Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files with secrets
+.env
+.env.*
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
