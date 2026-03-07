@@ -1,0 +1,36 @@
+version: "3.9"
+# ============================================================
+#  MirAI OS — Docker Compose
+#  Run with: docker-compose up -d
+#  Or just use bare metal for full Kali tool access
+# ============================================================
+
+services:
+  mirai:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: mirai_os
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/app/data
+      - ../config:/app/config
+      - ~/.ssh:/root/.ssh:ro
+    depends_on:
+      - redis
+    network_mode: host   # Required for Kali tool access
+    privileged: true     # Required for network scanning tools
+
+  redis:
+    image: redis:7-alpine
+    container_name: mirai_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+volumes:
+  redis_data:

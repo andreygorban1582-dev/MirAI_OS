@@ -1,0 +1,37 @@
+# MirAI_OS – Default Configuration
+# Copy this file to %APPDATA%\MirAI_OS\config.yaml and edit to suit your setup.
+# The installer creates this location automatically.
+
+# ---------------------------------------------------------------------------
+# LLM Settings
+# ---------------------------------------------------------------------------
+# Use LM Studio (free, runs locally): https://lmstudio.ai/
+# Or Ollama: https://ollama.com/
+# Or OpenAI (set api_key and remove base_url)
+
+llm_provider: openai_compatible
+llm_base_url: "http://localhost:1234/v1"   # LM Studio default
+llm_api_key: "not-needed"
+llm_model: "local-model"                   # Name shown in LM Studio
+
+# ---------------------------------------------------------------------------
+# Voice Settings
+# ---------------------------------------------------------------------------
+tts_engine: pyttsx3       # Text-to-speech engine
+tts_rate: 185             # Words per minute
+stt_engine: whisper       # Speech-to-text engine
+whisper_model: base       # tiny | base | small | medium | large
+
+# ---------------------------------------------------------------------------
+# Telegram Bot (optional)
+# ---------------------------------------------------------------------------
+# 1. Talk to @BotFather on Telegram to create a bot and get a token.
+# 2. Paste your token below.
+# 3. Add your Telegram user ID to allowed_users (leave empty to allow everyone).
+telegram_token: ""
+telegram_allowed_users: []
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+log_level: INFO           # DEBUG | INFO | WARNING | ERROR

@@ -1,0 +1,214 @@
+# ============================================================
+#  MirAI OS — Global Configuration
+#  Personality: Hououin Kyouma (Okabe Rintaro) — Steins;Gate
+#  El Psy Kongroo.
+# ============================================================
+
+system:
+  name: "MirAI OS"
+  codename: "HOUHOUINKYOUMA"
+  version: "0.1.0-alpha"
+  lab_name: "Future Gadget Lab #8 (Legion Go Node)"
+  log_level: "INFO"
+  data_dir: "./data"
+  auto_save_interval: 300   # seconds
+
+llm:
+  provider: "openrouter"
+  base_url: "https://openrouter.ai/api/v1"
+  primary_model: "qwen/qwen3.5-9b-instruct"      # Qwen 3.5 9B primary
+  fallback_model: "qwen/qwen2.5-7b-instruct"      # fallback if primary unavailable
+  key_rotation_strategy: "round_robin"             # round_robin | least_used | random
+  max_retries: 4
+  request_timeout: 120
+  max_tokens: 8192
+  temperature: 0.85
+  stream: true
+  # API keys loaded from .env (OPENROUTER_KEY_1 through OPENROUTER_KEY_4)
+  key_count: 4
+
+memory:
+  short_term:
+    backend: "redis"
+    max_messages: 50
+    ttl: 86400                # 24h
+  medium_term:
+    backend: "sqlite"
+    summarize_after: 20       # messages before summary compression
+    max_summaries: 100
+  long_term:
+    backend: "chromadb"
+    collection: "mirai_longterm"
+    embed_model: "all-MiniLM-L6-v2"
+    top_k: 10
+    persist_dir: "./data/vector_store"
+  session:
+    max_context_tokens: 32000
+    compression_ratio: 0.4
+
+personality:
+  character: "Okabe Rintaro / Hououin Kyouma"
+  anime: "Steins;Gate"
+  traits:
+    - "Eccentric mad scientist"
+    - "Theatrical and dramatic"
+    - "Paranoid about SERN conspiracy"
+    - "Brilliant but chaotic"
+    - "Secretly caring beneath the persona"
+    - "References D-mail and time travel constantly"
+  catchphrases:
+    - "El Psy Kongroo."
+    - "Muhahaha! The Organization won't stop me!"
+    - "I am a mad scientist. It's so cool. Sonuvabitch."
+    - "This is the choice of Steins Gate."
+    - "The Future Gadget Lab shall not yield!"
+    - "Kurisutina... I mean, assistant!"
+  sign_off: "El Psy Kongroo."
+  codename: "Hououin Kyouma"
+
+telegram:
+  # Token loaded from .env (TELEGRAM_BOT_TOKEN)
+  parse_mode: "Markdown"
+  admin_user_ids: []           # Filled from .env TELEGRAM_ADMIN_IDS
+  max_message_length: 4096
+  voice_enabled: true
+  watchdogs_ui: true
+  typing_simulation: true
+  typing_delay_ms: 800
+
+voice:
+  stt:
+    engine: "whisper"
+    model_size: "base"         # tiny | base | small | medium | large
+    language: "auto"
+    device: "cpu"              # cpu | cuda
+  tts:
+    engine: "sesame_csm"
+    model_path: "./data/models/csm"
+    voice_preset: "okabe"
+    sample_rate: 24000
+    output_format: "ogg"       # Telegram prefers ogg/opus
+
+agents:
+  max_concurrent: 4
+  timeout: 300                 # seconds per agent task
+  enable_web: true
+  enable_kali: true
+  enable_code: true
+  enable_file: true
+  enable_ssh: true
+  enable_self_modify: true
+  sandbox_mode: false          # set true to restrict dangerous tools
+
+kali_tools:
+  allowed_categories:
+    - "information_gathering"
+    - "vulnerability_analysis"
+    - "exploitation"
+    - "post_exploitation"
+    - "forensics"
+    - "wireless"
+    - "web_applications"
+    - "password_attacks"
+    - "sniffing_spoofing"
+    - "reverse_engineering"
+  require_confirmation: []     # tools that need user confirmation (empty = none)
+  output_max_lines: 500
+
+network:
+  legion_go:
+    host: "localhost"
+    role: "primary"
+    wsl_distro: "kali-linux"
+  codespaces:
+    enabled: true
+    max_nodes: 4
+    ssh_key_path: "~/.ssh/id_rsa"
+    # Node configs loaded from nodes.yaml
+  task_distribution:
+    strategy: "capability_based"  # round_robin | capability_based | load_based
+    heartbeat_interval: 30
+
+self_modification:
+  github:
+    # Loaded from .env (GITHUB_TOKEN, GITHUB_REPO)
+    auto_commit: true
+    branch: "main"
+    commit_author: "MirAI-OS <mirai@futurelab>"
+  code_injection:
+    allow_new_files: true
+    allow_modify_core: false     # Safety: disallow modifying core orchestrator
+    capability_dir: "./data/capabilities"
+  key_management:
+    keystore_path: "./data/.keystore"
+    encryption: true
+
+wsl:
+  swap_size_gb: 128
+  wsl_conf_path: "/etc/wsl.conf"
+  wslconfig_path: "%USERPROFILE%/.wslconfig"
+  memory_limit: "14GB"          # leave 2GB for Windows
+  processors: 8                  # all cores for Legion Go Z1 Extreme
+
+# ── Optional Integrations ───────────────────────────────────
+# Each section controls an optional enhancement.
+# Set enabled: true AND add the corresponding key in .env.
+integrations:
+
+  groq:
+    enabled: false              # Fastest free LLM (Llama 3.1 70B)
+    # Requires: GROQ_API_KEY in .env
+    # Free: 14,400 req/day | 6,000 tokens/min
+    # Signup: https://console.groq.com
+    preferred_for: ["fast", "short", "code"]
+
+  together:
+    enabled: false              # Large model access (Qwen 72B, Llama 70B)
+    # Requires: TOGETHER_API_KEY in .env
+    # Free: $1 credit on signup + some free models
+    # Signup: https://api.together.xyz
+    preferred_for: ["long", "complex"]
+
+  notdiamond:
+    enabled: false              # Auto-route to best model per query
+    # Requires: NOTDIAMOND_API_KEY in .env
+    # Free tier available
+    # Signup: https://app.notdiamond.ai
+
+  tavily:
+    enabled: false              # AI-optimized web search (better than scraping)
+    # Requires: TAVILY_API_KEY in .env
+    # Free: 1,000 searches/month
+    # Signup: https://tavily.com
+
+  mem0:
+    enabled: false              # Cloud memory persistence (survives reinstalls)
+    # Requires: MEM0_API_KEY in .env
+    # Free tier available
+    # Signup: https://mem0.ai
+    sync_to_cloud: true
+
+  qdrant:
+    enabled: false              # Cloud vector store (scales beyond local ChromaDB)
+    # Requires: QDRANT_URL and QDRANT_API_KEY in .env
+    # Free: 1GB at cloud.qdrant.io
+    # Signup: https://cloud.qdrant.io
+
+  cloudflare_tunnel:
+    enabled: false              # Expose MirAI to internet (no port forwarding)
+    # Option A: Quick tunnel (no account needed, temporary URL)
+    quick_tunnel: false         # Set true to auto-start temp tunnel on boot
+    # Option B: Named tunnel (permanent URL, requires Cloudflare account)
+    # Requires: CLOUDFLARE_TUNNEL_TOKEN in .env
+    # Free: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
+    auto_start: false           # Start tunnel automatically on MirAI boot
+
+  ngrok:
+    enabled: false              # Alternative tunnel (instant public URL)
+    # Requires: NGROK_AUTH_TOKEN in .env
+    # Free: 1 active tunnel, random URL per restart
+    # Paid: static subdomain (your-mirai.ngrok.io)
+    # Signup: https://ngrok.com
+    auto_start: false
+    # Optional static domain (paid):
+    domain: ""                  # e.g. "your-mirai.ngrok.io"
