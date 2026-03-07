@@ -1,0 +1,21 @@
+# MirAI_OS – Python dependencies
+# Install with:  pip install -r requirements.txt
+
+# HTTP client (OpenRouter API)
+httpx>=0.27.0
+
+# Telegram bot
+python-telegram-bot>=20.7
+
+# Text-to-Speech
+edge-tts>=6.1.9
+
+# Speech-to-Text
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.14          # microphone input backend
+
+# SSH / Codespace connector
+paramiko>=3.4.0
+
+# Environment / secrets
+python-dotenv>=1.0.0
