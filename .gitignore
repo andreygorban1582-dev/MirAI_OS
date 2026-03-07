@@ -1,0 +1,64 @@
+# ============================================================
+#  MirAI OS — .gitignore
+#  CRITICAL: .env contains secrets — never commit it
+# ============================================================
+
+# Secrets
+.env
+*.key
+*.pem
+data/.keystore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Data (too large / private — use .gitkeep to preserve structure)
+data/vector_store/*
+data/conversations/*
+data/sessions/*
+data/models/*
+data/mirai.log
+*.log
+
+# Keep directory structure visible in repo
+!data/vector_store/.gitkeep
+!data/conversations/.gitkeep
+!data/sessions/.gitkeep
+!data/models/.gitkeep
+
+# Capabilities are ALWAYS committed (they're code, not data)
+!data/capabilities/
+!data/capabilities/**
+
+# PyInstaller build output (keep spec, ignore binary)
+dist/
+build/
+*.spec
+!installer/*.iss
+MirAI_OS.exe
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Playwright
+.playwright/
+
+# Whisper cache
+~/.cache/whisper/

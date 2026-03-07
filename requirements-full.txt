@@ -1,0 +1,18 @@
+# ============================================================
+#  MirAI OS — Full Requirements (Core + All Optional Integrations)
+#  Install: pip install -r requirements-full.txt
+# ============================================================
+
+# Core
+-r requirements.txt
+
+# ── All optional integrations ────────────────────────────────
+groq>=0.9.0
+together>=1.2.0
+tavily-python>=0.3.0
+mem0ai>=0.1.0
+qdrant-client>=1.9.0
+ngrok>=1.0.0
+
+# ── Windows launcher (only needed to build .exe) ────────────
+pyinstaller>=6.0.0
