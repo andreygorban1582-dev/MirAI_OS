@@ -1,0 +1,88 @@
+# ============================================================
+#  MirAI OS — Compute Node Registry
+#  Add GitHub Codespaces / remote SSH nodes here
+#  MirAI will also auto-register nodes when given SSH keys
+# ============================================================
+
+nodes:
+  - id: "legion-go"
+    label: "Future Gadget Lab #8 — Legion Go"
+    host: "localhost"
+    port: 22
+    user: "root"
+    ssh_key: null               # local, no SSH needed
+    role: "primary"
+    capabilities:
+      - "llm_inference"
+      - "kali_tools"
+      - "voice_processing"
+      - "orchestration"
+    resources:
+      cpu_cores: 8
+      ram_gb: 16
+      swap_gb: 128
+    status: "active"
+
+  # GitHub Codespace nodes — fill in after creating codespaces
+  - id: "codespace-1"
+    label: "Codespace Alpha Node"
+    host: ""                    # e.g., USERNAME-REPONAME-HASH-9999.preview.app.github.dev
+    port: 22
+    user: "codespace"
+    ssh_key: "~/.ssh/codespace_key"
+    role: "worker"
+    capabilities:
+      - "code_execution"
+      - "web_browsing"
+      - "file_processing"
+    resources:
+      cpu_cores: 4
+      ram_gb: 8
+      swap_gb: 0
+    status: "inactive"
+
+  - id: "codespace-2"
+    label: "Codespace Beta Node"
+    host: ""
+    port: 22
+    user: "codespace"
+    ssh_key: "~/.ssh/codespace_key"
+    role: "worker"
+    capabilities:
+      - "code_execution"
+      - "web_browsing"
+    resources:
+      cpu_cores: 4
+      ram_gb: 8
+      swap_gb: 0
+    status: "inactive"
+
+  - id: "codespace-3"
+    label: "Codespace Gamma Node"
+    host: ""
+    port: 22
+    user: "codespace"
+    ssh_key: "~/.ssh/codespace_key"
+    role: "worker"
+    capabilities:
+      - "code_execution"
+    resources:
+      cpu_cores: 4
+      ram_gb: 8
+      swap_gb: 0
+    status: "inactive"
+
+  - id: "codespace-4"
+    label: "Codespace Delta Node"
+    host: ""
+    port: 22
+    user: "codespace"
+    ssh_key: "~/.ssh/codespace_key"
+    role: "worker"
+    capabilities:
+      - "code_execution"
+    resources:
+      cpu_cores: 4
+      ram_gb: 8
+      swap_gb: 0
+    status: "inactive"

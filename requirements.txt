@@ -1,0 +1,50 @@
+# ============================================================
+#  MirAI OS — Python Dependencies
+#  Install: pip install -r requirements.txt
+# ============================================================
+
+# ── Core ─────────────────────────────────────────────────────
+python-dotenv>=1.0.0
+pyyaml>=6.0
+httpx>=0.27.0
+aiofiles>=23.0
+
+# ── LLM / AI ─────────────────────────────────────────────────
+openai>=1.40.0          # OpenRouter uses OpenAI-compatible API
+tiktoken>=0.7.0         # Token counting
+
+# ── Memory / Vector store ────────────────────────────────────
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
+redis>=5.0.0
+
+# ── Telegram bot ─────────────────────────────────────────────
+python-telegram-bot>=21.0
+
+# ── Voice ────────────────────────────────────────────────────
+openai-whisper>=20231117
+pyttsx3>=2.90
+torchaudio>=2.0.0       # For Sesame CSM audio I/O
+huggingface_hub>=0.23.0 # For downloading CSM weights
+
+# ── Web automation ────────────────────────────────────────────
+playwright>=1.44.0
+
+# ── SSH / Remote nodes ───────────────────────────────────────
+paramiko>=3.4.0
+
+# ── GitHub / Self-modification ───────────────────────────────
+PyGithub>=2.3.0
+
+# ── Crypto / Security (key storage) ─────────────────────────
+cryptography>=42.0.0
+
+# ── Utilities ────────────────────────────────────────────────
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.2.0
+Pillow>=10.0.0          # Image processing
+numpy>=1.26.0
+
+# ── Optional: GPU acceleration (if available) ────────────────
+# torch>=2.3.0          # Uncomment if GPU available

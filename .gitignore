@@ -1,0 +1,50 @@
+# ============================================================
+#  MirAI OS — .gitignore
+#  CRITICAL: .env contains secrets — never commit it
+# ============================================================
+
+# Secrets
+.env
+*.key
+*.pem
+data/.keystore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Data (too large / private)
+data/vector_store/
+data/conversations/
+data/sessions/
+data/models/
+data/mirai.log
+*.log
+
+# Capabilities are committed (they're code)
+!data/capabilities/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Playwright
+.playwright/
+
+# Whisper cache
+~/.cache/whisper/
