@@ -1,0 +1,17 @@
+# MirAI_OS – Python dependencies
+# Install with: pip install -r requirements.txt
+
+# Core AI / LLM
+openai>=1.14.0          # OpenAI-compatible client (works with LM Studio, Ollama, etc.)
+PyYAML>=6.0             # Config file parsing
+
+# Voice (optional – remove if not using voice features)
+pyttsx3>=2.90           # Text-to-speech
+openai-whisper>=20231117  # Speech-to-text (requires ffmpeg on PATH)
+SpeechRecognition>=3.10.0 # Microphone input
+
+# Telegram bot (optional – remove if not using Telegram)
+python-telegram-bot>=20.0
+
+# UI / system
+pywin32>=306; sys_platform == "win32"   # Windows system access (taskbar, registry)
