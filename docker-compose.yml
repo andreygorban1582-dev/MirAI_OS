@@ -1,0 +1,62 @@
+version: "3.9"
+
+# MirAI_OS – Docker Compose
+# Starts the orchestrator, Ollama LLM backend, and supporting services.
+# Usage: docker compose up -d
+
+services:
+  # ── Ollama LLM backend ─────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mirai-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── Model puller (runs once to pull the default model) ────────────────────
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: mirai-ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: >
+      sh -c "ollama pull ${OLLAMA_MODEL:-dolphin-mistral} && echo Done"
+    restart: "no"
+
+  # ── MirAI_OS orchestrator ──────────────────────────────────────────────────
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mirai-orchestrator
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-dolphin-mistral}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID:-0}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - MOD2_ENABLED=${MOD2_ENABLED:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    command: ["python", "main.py", "--mode", "service"]
+
+volumes:
+  ollama-data:
