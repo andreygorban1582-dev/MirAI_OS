@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+~/.mirai_os.env
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+*.spec
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
