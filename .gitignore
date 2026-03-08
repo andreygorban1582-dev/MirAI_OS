@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Runtime data
+*.db
+*.sqlite3
+*.log
+
+# Config with secrets
+config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+docker/
+
+# TTS output
+*.mp3
+*.wav
+*.ogg
+
+# Temporary
+/tmp/
+*.tmp
