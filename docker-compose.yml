@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  # ── Ollama – uncensored 8B model ──────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mirai-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # ── Model bootstrapper – pulls dolphin-llama3:8b on first run ─────────
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: mirai-ollama-pull
+    depends_on:
+      - ollama
+    restart: "no"
+    entrypoint: >
+      sh -c "
+        sleep 5 &&
+        ollama pull ${OLLAMA_MODEL:-dolphin-llama3:8b} &&
+        echo 'Model ready.'
+      "
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    volumes:
+      - ollama-data:/root/.ollama
+
+  # ── MirAI_OS orchestrator ─────────────────────────────────────────────
+  mirai-os:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mirai-orchestrator
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-dolphin-llama3:8b}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - WSL_ENABLED=false
+      - KALI_ENABLED=${KALI_ENABLED:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+volumes:
+  ollama-data:
+    driver: local

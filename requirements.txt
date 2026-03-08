@@ -1,0 +1,15 @@
+# MirAI_OS Python requirements
+# Core
+httpx>=0.27.0
+python-dotenv>=1.0.0
+
+# Telegram bot (optional – needed for --telegram mode)
+python-telegram-bot>=20.7
+
+# Voice I/O (optional)
+edge-tts>=6.1.9
+SpeechRecognition>=3.10.0
+# PyAudio>=0.2.14   # requires portaudio19-dev; install separately if needed
+
+# SSH / remote control
+paramiko>=3.4.0
