@@ -1,0 +1,46 @@
+{
+  "profile_name": "LegionGo",
+  "device": "Lenovo Legion Go",
+  "hardware": {
+    "cpu": "AMD Ryzen Z1 Extreme",
+    "cpu_cores": 8,
+    "cpu_threads": 16,
+    "gpu": "AMD Radeon 780M",
+    "gpu_vram_mb": 4096,
+    "ram_gb": 16,
+    "gpu_architecture": "RDNA3",
+    "rocm_supported": true,
+    "rocm_version": "5.7"
+  },
+  "ai_performance": {
+    "max_context_tokens": 4096,
+    "max_batch_size": 4,
+    "preferred_model_size": "7B",
+    "quantization": "Q4_K_M",
+    "use_gpu_acceleration": true,
+    "gpu_layers": 20,
+    "cpu_threads": 8,
+    "context_window_dynamic": true,
+    "kv_cache_type": "f16",
+    "mmap": true,
+    "mlock": false
+  },
+  "power": {
+    "tdp_mode": "balanced",
+    "tdp_watt": 25,
+    "boost_mode": false,
+    "thermal_throttle_temp_c": 85,
+    "fan_mode": "auto"
+  },
+  "memory": {
+    "model_max_ram_gb": 10,
+    "cache_size_mb": 512,
+    "swap_enabled": false,
+    "embedding_cache_size": 1000
+  },
+  "display": {
+    "resolution": "2560x1600",
+    "refresh_rate": 144,
+    "hdr": false
+  }
+}

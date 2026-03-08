@@ -1,0 +1,70 @@
+# MirAI_OS Requirements
+# Core AI / LLM
+openai>=1.0.0
+httpx>=0.24.0
+aiohttp>=3.9.0
+tiktoken>=0.5.0
+
+# Telegram Bot
+python-telegram-bot>=20.0
+
+# Voice I/O
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.24.0
+scipy>=1.11.0
+pyaudio>=0.2.13
+
+# AMD / ROCm acceleration (Legion Go)
+torch>=2.1.0
+# For AMD ROCm: install torch with ROCm wheels separately
+# pip install torch --index-url https://download.pytorch.org/whl/rocm5.7
+
+# Text-to-speech / Speech-to-text
+transformers>=4.35.0
+accelerate>=0.24.0
+datasets>=2.14.0
+
+# Sesame CSM (voice cloning)
+huggingface_hub>=0.19.0
+
+# System & performance
+psutil>=5.9.0
+py-cpuinfo>=9.0.0
+
+# Windows-specific
+pywin32>=306; sys_platform == "win32"
+winreg; sys_platform == "win32"
+
+# Kali Linux / Security tools integration
+paramiko>=3.3.0
+fabric>=3.2.0
+
+# Context / Memory
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+
+# Configuration
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+toml>=0.10.2
+
+# Async utilities
+anyio>=4.0.0
+asyncio-throttle>=1.0.2
+
+# Logging
+loguru>=0.7.0
+
+# CLI / UI
+rich>=13.0.0
+typer>=0.9.0
+prompt_toolkit>=3.0.0
+
+# Data
+json5>=0.9.14
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
