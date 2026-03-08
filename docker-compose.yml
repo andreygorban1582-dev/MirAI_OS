@@ -1,0 +1,237 @@
+version: "3.9"
+
+# MirAI_OS – Full Docker Stack
+# Starts: Ollama (LLM), Orchestrator, Redis, PostgreSQL, Nginx, ChromaDB, N8n, Flowise
+
+networks:
+  mirai_net:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  postgres_data:
+  redis_data:
+  chroma_data:
+  n8n_data:
+  flowise_data:
+  minio_data:
+  nginx_certs:
+
+services:
+
+  # ─────────────────────────────────────────────
+  # LLM – Ollama (local, offline-capable)
+  # ─────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mirai_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - mirai_net
+    # GPU support (uncomment if NVIDIA GPU is available)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Pulls the configured LLM model into Ollama on first start
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: mirai_ollama_pull
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        echo 'Pulling model: ${OLLAMA_MODEL:-dolphin-mistral}' &&
+        ollama pull ${OLLAMA_MODEL:-dolphin-mistral} &&
+        echo 'Model pull complete.'
+      "
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────
+  # Core Orchestrator – FastAPI Python app
+  # ─────────────────────────────────────────────
+  orchestrator:
+    build:
+      context: ./containers/orchestrator
+      dockerfile: Dockerfile
+    container_name: mirai_orchestrator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-dolphin-mistral}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-mirai}
+      - POSTGRES_USER=${POSTGRES_USER:-mirai}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mirai_secret}
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMA_HOST=http://chromadb:8000
+      - SECRET_KEY=${SECRET_KEY:-change_this_in_production}
+    depends_on:
+      ollama:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mirai_net
+    volumes:
+      - ./containers/orchestrator:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # PostgreSQL – persistent storage
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: mirai_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-mirai}
+      - POSTGRES_USER=${POSTGRES_USER:-mirai}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mirai_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./containers/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - mirai_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mirai} -d ${POSTGRES_DB:-mirai}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # Redis – session cache and message queue
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: mirai_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - mirai_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # ChromaDB – vector store for context memory
+  # ─────────────────────────────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: mirai_chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - mirai_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ─────────────────────────────────────────────
+  # N8n – workflow automation
+  # ─────────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: mirai_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-mirai_n8n}
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - mirai_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────
+  # Flowise – visual LLM flow builder
+  # ─────────────────────────────────────────────
+  flowise:
+    image: flowiseai/flowise:latest
+    container_name: mirai_flowise
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - FLOWISE_USERNAME=${FLOWISE_USER:-admin}
+      - FLOWISE_PASSWORD=${FLOWISE_PASSWORD:-mirai_flowise}
+      - DATABASE_PATH=/root/.flowise
+      - APIKEY_PATH=/root/.flowise
+      - SECRETKEY_PATH=/root/.flowise
+    volumes:
+      - flowise_data:/root/.flowise
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────
+  # Nginx – reverse proxy / gateway
+  # ─────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: mirai_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./containers/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_certs:/etc/nginx/certs
+    networks:
+      - mirai_net
+    depends_on:
+      - orchestrator
