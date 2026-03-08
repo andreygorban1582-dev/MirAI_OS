@@ -3,7 +3,7 @@
 MirAI_OS is an advanced artificial intelligence operating system designed to integrate various functionalities such as communication, autonomous operations, and more.
 
 ## Features
-- **Dolphin-Mistral (4B)** local LLM via Ollama — runs entirely on Codespaces
+- **Dolphin-Mistral** local LLM via Ollama — runs entirely on Codespaces
 - Telegram Bot with Okabe Personality
 - LLM Engine with OpenRouter Integration (optional cloud fallback)
 - Voice I/O with edge-tts / SpeechRecognition

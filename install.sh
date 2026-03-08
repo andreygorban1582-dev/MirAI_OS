@@ -12,6 +12,7 @@
 set -euo pipefail
 
 OLLAMA_MODEL="${OLLAMA_MODEL:-dolphin-mistral}"
+OLLAMA_STARTUP_TIMEOUT="${OLLAMA_STARTUP_TIMEOUT:-30}"
 
 # ---- helpers ----------------------------------------------------------------
 info()  { printf '\033[1;34m[MirAI]\033[0m %s\n' "$*"; }
@@ -47,7 +48,7 @@ if ! curl -sf http://127.0.0.1:11434/api/tags > /dev/null 2>&1; then
     info "Starting Ollama server in the background …"
     nohup ollama serve > /tmp/ollama.log 2>&1 &
     # Wait for the server to become ready
-    for i in $(seq 1 30); do
+    for i in $(seq 1 "$OLLAMA_STARTUP_TIMEOUT"); do
         if curl -sf http://127.0.0.1:11434/api/tags > /dev/null 2>&1; then
             break
         fi

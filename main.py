@@ -258,9 +258,18 @@ class LLMClient:
                 options={"temperature": temperature, "num_predict": max_tokens},
             )
             return result["message"]["content"].strip()
+        except ConnectionError as e:
+            logger.error(f"Ollama connection error for {self.client_id}: {e}")
+            return (
+                "[Ollama Error] Cannot connect to Ollama server. "
+                "Run 'ollama serve' or 'bash install.sh' to start it."
+            )
         except Exception as e:
             logger.error(f"Ollama error for {self.client_id}: {e}")
-            return f"[Ollama Error: {e}]"
+            return (
+                f"[Ollama Error: {e}] "
+                "Ensure the model is pulled: ollama pull dolphin-mistral"
+            )
 
     async def _call_openrouter(self, temperature: float, max_tokens: int) -> str:
         if not _HTTPX_AVAILABLE:
