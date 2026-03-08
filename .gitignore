@@ -1,0 +1,41 @@
+# MirAI_OS .gitignore
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# PyInstaller
+*.spec.bak
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data & logs (runtime)
+data/*.json
+logs/*.log
+
+# OS
+.DS_Store
+Thumbs.db
