@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.env
+!.env.example
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+*.spec.bak
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Docker
+.docker/
+
+# Kali / security
+*.pcap
+
+# SSL certs (auto-generated)
+containers/nginx/ssl/*.key
+containers/nginx/ssl/*.crt
+containers/nginx/ssl/*.pem
+
+# Swap files
+*.swap
+
+# Logs
+install.log

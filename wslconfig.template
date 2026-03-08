@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  MirAI_OS  –  WSL2 Configuration Template for Legion Go
+#  Place this file at: C:\Users\<YourName>\.wslconfig
+#  Then restart WSL: wsl --shutdown
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[wsl2]
+# RAM allocation  –  adjust to your Legion Go's total RAM
+memory=32GB
+
+# CPU cores  –  Legion Go has 8 cores
+processors=8
+
+# Swap file (256 GB on D: drive for large LLMs)
+swap=256GB
+swapFile=D:\\wsl2-swap.vhdx
+
+# Allow nested virtualisation (for Docker-in-Docker)
+nestedVirtualization=true
+
+# Enable GPU passthrough (requires WSL2 + NVIDIA/AMD drivers)
+# gpuSupport=true
+
+# Increase page reporting for better memory management
+pageReporting=true
+
+[experimental]
+# Memory reclaim: gradual returns idle WSL2 memory to Windows
+autoMemoryReclaim=gradual
+
+# Sparse VHD: reduces disk usage of WSL2 disks
+sparseVhd=true

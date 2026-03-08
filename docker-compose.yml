@@ -1,0 +1,455 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  MirAI_OS  –  Full Container Stack
+#  Kali Linux / WSL2  •  Legion Go
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Ollama  –  Local LLM runtime (used by Agentverse, Orchestrator)
+  # ─────────────────────────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mirai_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=4
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Agentverse  –  Next.js front-end + Ollama chat UI (port 3000)
+  # ─────────────────────────────────────────────────────────────────────────────
+  agentverse:
+    build:
+      context: ./containers/agentverse
+      dockerfile: Dockerfile
+    container_name: mirai_agentverse
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - NEXT_PUBLIC_OLLAMA_URL=http://localhost:11434
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-mirai_secret_change_me}
+    depends_on:
+      - ollama
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # N8n  –  Workflow automation (port 5678)
+  # ─────────────────────────────────────────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: mirai_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-mirai_n8n_pass}
+      - WEBHOOK_URL=http://localhost:5678
+      - GENERIC_TIMEZONE=UTC
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-mirai_n8n_enc_key_change}
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Flowise  –  Visual LLM/agent builder (port 3001)
+  # ─────────────────────────────────────────────────────────────────────────────
+  flowise:
+    image: flowiseai/flowise:latest
+    container_name: mirai_flowise
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - flowise_data:/root/.flowise
+    environment:
+      - FLOWISE_USERNAME=${FLOWISE_USER:-admin}
+      - FLOWISE_PASSWORD=${FLOWISE_PASSWORD:-mirai_flowise_pass}
+      - PORT=3001
+      - DATABASE_PATH=/root/.flowise
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # ChromaDB  –  Vector database (port 8000)
+  # ─────────────────────────────────────────────────────────────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: mirai_chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenConfigServerAuthCredentialsProvider
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+      - CHROMA_SERVER_AUTH_CREDENTIALS=${CHROMA_TOKEN:-mirai_chroma_token_change}
+      - ANONYMIZED_TELEMETRY=false
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # LangChain API  –  Rolling context with ChromaDB + sentence-transformers (8100)
+  # ─────────────────────────────────────────────────────────────────────────────
+  langchain:
+    build:
+      context: ./containers/langchain
+      dockerfile: Dockerfile
+    container_name: mirai_langchain
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    environment:
+      - CHROMA_URL=http://chromadb:8000
+      - CHROMA_TOKEN=${CHROMA_TOKEN:-mirai_chroma_token_change}
+      - OLLAMA_URL=http://ollama:11434
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - REDIS_URL=redis://redis:6379
+      - CONTEXT_WINDOW=128000
+    depends_on:
+      - chromadb
+      - ollama
+      - redis
+    volumes:
+      - langchain_data:/app/data
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Context Storage  –  128 GB PostgreSQL optimised for unlimited context (5432)
+  # ─────────────────────────────────────────────────────────────────────────────
+  context_storage:
+    build:
+      context: ./containers/context-storage
+      dockerfile: Dockerfile
+    container_name: mirai_context_storage
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=mirai_context
+      - POSTGRES_USER=${DB_USER:-mirai}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-mirai_db_pass_change}
+      - POSTGRES_MAX_CONNECTIONS=500
+      - SHARED_BUFFERS=32GB
+      - EFFECTIVE_CACHE_SIZE=96GB
+      - WORK_MEM=256MB
+    volumes:
+      - context_storage_data:/var/lib/postgresql/data
+      - ./containers/context-storage/init.sql:/docker-entrypoint-initdb.d/init.sql
+    shm_size: '4gb'
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Redis  –  Cache + pub/sub message bus (6379)
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: mirai_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+        --appendonly yes
+        --maxmemory 8gb
+        --maxmemory-policy allkeys-lru
+        --save 900 1
+        --save 300 10
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Orchestrator  –  MirAI core with Nous-Hermes-2-Mistral-7B-DPO (8080)
+  # ─────────────────────────────────────────────────────────────────────────────
+  orchestrator:
+    build:
+      context: ./containers/orchestrator
+      dockerfile: Dockerfile
+    container_name: mirai_orchestrator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-nous-hermes-2-mistral-7b-dpo}
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_URL=http://chromadb:8000
+      - CHROMA_TOKEN=${CHROMA_TOKEN:-mirai_chroma_token_change}
+      - LANGCHAIN_URL=http://langchain:8100
+      - N8N_URL=http://n8n:5678
+      - CSM_URL=http://csm:8300
+      - WHISPER_URL=http://whisper:8400
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - DB_URL=postgresql://${DB_USER:-mirai}:${DB_PASSWORD:-mirai_db_pass_change}@context_storage:5432/mirai_context
+    depends_on:
+      - ollama
+      - redis
+      - chromadb
+      - context_storage
+    volumes:
+      - orchestrator_data:/app/data
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # CSM  –  Sesame AI speech synthesis (port 8300)
+  # ─────────────────────────────────────────────────────────────────────────────
+  csm:
+    build:
+      context: ./containers/csm
+      dockerfile: Dockerfile
+    container_name: mirai_csm
+    restart: unless-stopped
+    ports:
+      - "8300:8300"
+    volumes:
+      - csm_models:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Whisper  –  faster-whisper-plus STT listener (port 8400)
+  # ─────────────────────────────────────────────────────────────────────────────
+  whisper:
+    build:
+      context: ./containers/whisper
+      dockerfile: Dockerfile
+    container_name: mirai_whisper
+    restart: unless-stopped
+    ports:
+      - "8400:8400"
+    volumes:
+      - whisper_models:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Kali Linux  –  nmap · nuclei · dirbuster · XFCE · DinD (VNC 5901 / noVNC 6901)
+  # ─────────────────────────────────────────────────────────────────────────────
+  kali:
+    build:
+      context: ./containers/kali
+      dockerfile: Dockerfile
+    container_name: mirai_kali
+    restart: unless-stopped
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    ports:
+      - "5901:5901"
+      - "6901:6901"
+    volumes:
+      - kali_data:/root
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - VNC_PASSWORD=${VNC_PASSWORD:-mirai_vnc_change}
+      - DISPLAY=:1
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Rancher  –  Multi-VM SSH orchestration / Kubernetes management (9090 / 9443)
+  # ─────────────────────────────────────────────────────────────────────────────
+  rancher:
+    image: rancher/rancher:latest
+    container_name: mirai_rancher
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "9090:80"
+      - "9443:443"
+    volumes:
+      - rancher_data:/var/lib/rancher
+      - ${SSH_KEY_PATH:-~/.ssh}:/root/.ssh:ro
+    environment:
+      - CATTLE_BOOTSTRAP_PASSWORD=${RANCHER_BOOTSTRAP_PASSWORD:-mirai_rancher_pass}
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # OpenClaw  –  Game-agent sandbox environment (port 8200)
+  # ─────────────────────────────────────────────────────────────────────────────
+  openclaw:
+    build:
+      context: ./containers/openclaw
+      dockerfile: Dockerfile
+    container_name: mirai_openclaw
+    restart: unless-stopped
+    ports:
+      - "8200:8200"
+    environment:
+      - DISPLAY=:0
+    volumes:
+      - openclaw_data:/app/data
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # PC Control  –  pynput full desktop control API (port 8500)
+  # ─────────────────────────────────────────────────────────────────────────────
+  pc_control:
+    build:
+      context: ./containers/pc-control
+      dockerfile: Dockerfile
+    container_name: mirai_pc_control
+    restart: unless-stopped
+    ports:
+      - "8500:8500"
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    network_mode: host
+    privileged: true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Robin  –  Tor dark-web proxy (SOCKS5 9050 / control 9051)
+  # ─────────────────────────────────────────────────────────────────────────────
+  robin:
+    build:
+      context: ./containers/robin
+      dockerfile: Dockerfile
+    container_name: mirai_robin
+    restart: unless-stopped
+    ports:
+      - "9050:9050"
+      - "9051:9051"
+    volumes:
+      - tor_data:/var/lib/tor
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # D-Drive Storage  –  256 GB MinIO object store + PostgreSQL on D:\ (9000/9001)
+  # ─────────────────────────────────────────────────────────────────────────────
+  d_drive_storage:
+    image: minio/minio:latest
+    container_name: mirai_d_storage
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ${D_DRIVE_PATH:-/mnt/d/mirai_storage}:/data
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER:-mirai_admin}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD:-mirai_minio_pass_change}
+      - MINIO_BROWSER_REDIRECT_URL=http://localhost:9001
+    command: server /data --console-address ":9001"
+    networks:
+      - mirai_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Swap Manager  –  256 GB SSD→RAM swap configuration (privileged, no network)
+  # ─────────────────────────────────────────────────────────────────────────────
+  swap_manager:
+    build:
+      context: ./containers/swap-manager
+      dockerfile: Dockerfile
+    container_name: mirai_swap_manager
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /proc:/host/proc:rw
+      - /sys:/host/sys:rw
+      - ${SWAP_PATH:-/mnt/d/mirai_swap}:/swapspace
+    environment:
+      - SWAP_SIZE_GB=${SWAP_SIZE_GB:-256}
+      - SWAP_PATH=/swapspace/mirai.swap
+    network_mode: none
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Nginx  –  TLS reverse proxy / security gateway (80 / 443)
+  # ─────────────────────────────────────────────────────────────────────────────
+  nginx:
+    build:
+      context: ./containers/nginx
+      dockerfile: Dockerfile
+    container_name: mirai_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./containers/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./containers/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - agentverse
+      - n8n
+      - flowise
+      - orchestrator
+    networks:
+      - mirai_net
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Named volumes
+# ═══════════════════════════════════════════════════════════════════════════════
+volumes:
+  ollama_data:
+  n8n_data:
+  flowise_data:
+  chromadb_data:
+  langchain_data:
+  redis_data:
+  context_storage_data:
+  csm_models:
+  whisper_models:
+  kali_data:
+  orchestrator_data:
+  rancher_data:
+  tor_data:
+  nginx_logs:
+  openclaw_data:
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Networks
+# ═══════════════════════════════════════════════════════════════════════════════
+networks:
+  mirai_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
