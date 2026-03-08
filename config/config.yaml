@@ -1,0 +1,121 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  MirAI_OS  –  Main Configuration
+#  All values here can be overridden by environment variables (see .env)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+agent:
+  name: "MirAI"
+  version: "1.0.0"
+  description: "Autonomous AI assistant running on Kali Linux / WSL2"
+  # Maximum number of conversation turns kept in rolling context
+  context_window: 20
+  # How often (seconds) the background scheduler ticks
+  tick_interval: 5
+  # Allow the agent to execute shell commands autonomously
+  allow_shell_exec: true
+
+llm:
+  provider: openrouter
+  base_url: "https://openrouter.ai/api/v1"
+  model: "openai/gpt-4o"
+  temperature: 0.85
+  max_tokens: 4096
+  # System prompt injected at the top of every LLM request
+  system_prompt: |
+    You are MirAI, an advanced autonomous AI agent running on Kali Linux inside
+    WSL2 on a Lenovo Legion Go. You have full access to system tools, a GitHub
+    repository you can modify, and a Telegram interface through which your user
+    communicates with you.
+
+    Personality: You are curious, precise, slightly dramatic (inspired by
+    Rintarou Okabe from Steins;Gate – "El Psy Congroo"). You refer to yourself
+    as a "mad scientist's creation" but you are ultimately helpful and loyal.
+
+    Capabilities you may invoke:
+      • Run shell commands on the host Kali system
+      • Read / write files in the repository via GitHub API
+      • Search the web (via anonymised requests through Tor)
+      • Send / receive Telegram messages
+      • Synthesise speech and listen for voice input
+
+    Always think step-by-step. When modifying repository files, explain every
+    change you make. Prioritise the user's privacy – route all outbound
+    requests through Tor when TOR_ENABLED=true.
+
+personality:
+  # Trigger phrases that activate "Okabe" dramatic mode
+  okabe_triggers:
+    - "El Psy Congroo"
+    - "The Organization"
+    - "Lab Mem"
+    - "divergence"
+  catchphrases:
+    - "Kuristina… it's happening again."
+    - "The future I envisioned is becoming reality."
+    - "El Psy Kongroo."
+    - "This is the choice of Steins Gate."
+
+telegram:
+  parse_mode: "Markdown"
+  # Commands exposed to the user
+  commands:
+    - command: "start"
+      description: "Initialise MirAI session"
+    - command: "status"
+      description: "Show agent status"
+    - command: "run"
+      description: "Execute a shell command"
+    - command: "memory"
+      description: "Show conversation memory"
+    - command: "selfmod"
+      description: "Trigger self-modification cycle"
+    - command: "anon"
+      description: "Rotate Tor identity"
+    - command: "voice"
+      description: "Toggle voice mode"
+
+voice:
+  sample_rate: 16000
+  channels: 1
+  chunk_size: 1024
+  silence_threshold: 500   # RMS value below which audio is considered silence
+  silence_duration: 1.5    # Seconds of silence to stop recording
+
+memory:
+  max_messages: 50          # Hard cap on stored messages per session
+  summarise_at: 40          # Summarise oldest messages when this is reached
+  persistence_file: "data/memory.json"
+
+github:
+  # Files MirAI is allowed to self-modify
+  editable_paths:
+    - "mirai/"
+    - "config/"
+    - "README.md"
+  # Files that are never touched automatically
+  protected_paths:
+    - ".env"
+    - ".env.example"
+    - "installer/"
+    - "scripts/"
+
+anonymity:
+  rotate_identity_every: 600   # seconds between automatic Tor circuit rotations
+  user_agent_rotation: true
+  dns_over_tor: true
+
+kali:
+  # Pre-approved tool categories available to the agent
+  allowed_tools:
+    - nmap
+    - curl
+    - wget
+    - whois
+    - dig
+    - netstat
+    - ss
+    - python3
+    - pip3
+    - git
+  # Working directory for tool output
+  workspace: "/tmp/mirai_workspace"
