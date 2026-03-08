@@ -18,8 +18,9 @@ a = Analysis(
     pathex=['.'],
     binaries=[],
     datas=[
-        # Include the mods system and any mods/ directory if present
+        # Include the mods system and persona definitions
         ('mods.py', '.'),
+        ('lab_personas.py', '.'),
     ],
     hiddenimports=[
         # Telegram
