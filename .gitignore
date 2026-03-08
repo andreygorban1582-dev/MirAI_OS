@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Distribution / build
+build/
+dist/
+*.egg-info/
+*.egg
+
+# PyInstaller
+*.spec.bak
+
+# Logs / runtime artifacts
+*.log
+patch_history.json
+/tmp/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+profiles.json
