@@ -77,7 +77,14 @@ try:
 except ImportError:
     _K8S_AVAILABLE = False
 
-# For local LLM (optional)
+# For local LLM via Ollama (preferred for Codespaces)
+try:
+    import ollama as _ollama_mod
+    _OLLAMA_AVAILABLE = True
+except ImportError:
+    _OLLAMA_AVAILABLE = False
+
+# For local LLM via Transformers (optional, e.g. Raspberry Pi)
 try:
     from transformers import pipeline
     _TRANSFORMERS_AVAILABLE = True
@@ -112,6 +119,11 @@ class Config:
     # Local LLM fallback (for Raspberry Pi / offline)
     USE_LOCAL_LLM: bool = os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
     LOCAL_MODEL_PATH: str = os.getenv("LOCAL_MODEL_PATH", "")  # e.g., "microsoft/phi-2"
+
+    # Ollama (preferred local LLM backend for Codespaces)
+    USE_OLLAMA: bool = os.getenv("USE_OLLAMA", "false").lower() == "true"
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "dolphin-mistral")
+    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
     # Telegram
     TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -196,7 +208,8 @@ class ContextOptimizer:
 
 class LLMClient:
     """
-    Unified LLM client that can use OpenRouter, local model, or fallback.
+    Unified LLM client that can use Ollama (Dolphin-Mistral), OpenRouter,
+    local Transformers model, or fallback.
     Each instance can have its own model and context.
     """
     def __init__(self, model: str = cfg.WORKER_MODEL, system_prompt: str = "", client_id: str = "default"):
@@ -227,10 +240,36 @@ class LLMClient:
         return reply
 
     async def _call_api(self, temperature: float, max_tokens: int) -> str:
+        # Priority: Ollama > Local Transformers > OpenRouter
+        if cfg.USE_OLLAMA and _OLLAMA_AVAILABLE:
+            return await self._call_ollama(temperature, max_tokens)
         if cfg.USE_LOCAL_LLM and self.local_pipeline:
             return await self._call_local(temperature, max_tokens)
-        else:
-            return await self._call_openrouter(temperature, max_tokens)
+        return await self._call_openrouter(temperature, max_tokens)
+
+    async def _call_ollama(self, temperature: float, max_tokens: int) -> str:
+        """Call the local Ollama server (Dolphin-Mistral or any pulled model)."""
+        messages = self.context.get_messages(self.system_prompt)
+        try:
+            result = await asyncio.to_thread(
+                _ollama_mod.chat,
+                model=cfg.OLLAMA_MODEL,
+                messages=messages,
+                options={"temperature": temperature, "num_predict": max_tokens},
+            )
+            return result["message"]["content"].strip()
+        except ConnectionError as e:
+            logger.error(f"Ollama connection error for {self.client_id}: {e}")
+            return (
+                "[Ollama Error] Cannot connect to Ollama server. "
+                "Run 'ollama serve' or 'bash install.sh' to start it."
+            )
+        except Exception as e:
+            logger.error(f"Ollama error for {self.client_id}: {e}")
+            return (
+                f"[Ollama Error: {e}] "
+                "Ensure the model is pulled: ollama pull dolphin-mistral"
+            )
 
     async def _call_openrouter(self, temperature: float, max_tokens: int) -> str:
         if not _HTTPX_AVAILABLE:

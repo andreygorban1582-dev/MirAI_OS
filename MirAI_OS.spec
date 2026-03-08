@@ -21,6 +21,7 @@ a = Analysis(
         # Include the mods system and persona definitions
         ('mods.py', '.'),
         ('lab_personas.py', '.'),
+        ('orchestrator.py', '.'),
     ],
     hiddenimports=[
         # Telegram
