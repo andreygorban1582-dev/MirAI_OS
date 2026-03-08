@@ -78,13 +78,13 @@ class UserProfile:
     def summary(self) -> str:
         """Return a human-readable summary of this profile."""
         lines = [
-            f"👤 Profile: {self.display_name or self.user_id}",
-            f"🎭 Preferred persona : {self.preferred_persona or 'auto (orchestrator decides)'}",
-            f"🌡  LLM temperature   : {self.llm_temperature}",
-            f"📝 Max tokens        : {self.llm_max_tokens}",
-            f"🔊 Voice output      : {'on' if self.use_voice else 'off'} ({self.tts_voice})",
-            f"🌐 Language          : {self.language}",
-            f"🔍 Verbose responses : {'on' if self.verbose_responses else 'off'}",
+            f"👤 Profile         : {self.display_name or self.user_id}",
+            f"🎭 Preferred persona: {self.preferred_persona or 'auto (orchestrator decides)'}",
+            f"🌡  LLM temperature : {self.llm_temperature}",
+            f"📝 Max tokens       : {self.llm_max_tokens}",
+            f"🔊 Voice output     : {'on' if self.use_voice else 'off'} ({self.tts_voice})",
+            f"🌐 Language         : {self.language}",
+            f"🔍 Verbose responses: {'on' if self.verbose_responses else 'off'}",
         ]
         return "\n".join(lines)
 
@@ -131,16 +131,22 @@ class ProfileManager:
         user_id = str(user_id)
         profile = self.get(user_id)
         valid_fields = set(UserProfile.__dataclass_fields__)  # type: ignore[attr-defined]
+        # Build a mapping from field name to declared Python type for coercion
+        _field_types: Dict[str, type] = {
+            "llm_temperature": float,
+            "llm_max_tokens": int,
+            "use_voice": bool,
+            "verbose_responses": bool,
+        }
         for key, value in kwargs.items():
             if key in valid_fields and key != "user_id":
                 try:
-                    # Coerce to the declared type
-                    field_type = UserProfile.__dataclass_fields__[key].type  # type: ignore[attr-defined]
-                    if field_type in ("float", float):
+                    target_type = _field_types.get(key)
+                    if target_type is float:
                         value = float(value)
-                    elif field_type in ("int", int):
+                    elif target_type is int:
                         value = int(value)
-                    elif field_type in ("bool", bool):
+                    elif target_type is bool:
                         if isinstance(value, str):
                             value = value.lower() in ("1", "true", "yes", "on")
                         else:

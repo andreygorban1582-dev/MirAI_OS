@@ -65,7 +65,7 @@ Each user (Telegram or CLI) can customise their experience through persistent pr
 | Command | Description |
 |---|---|
 | `/profile` | Show your current profile settings |
-| `/setpersona <name\|auto>` | Pin a preferred persona (or use `auto` to let the orchestrator decide) |
+| `/setpersona <name or auto>` | Pin a preferred persona (or use `auto` to let the orchestrator decide) |
 | `/setvoice <voice>` | Set your edge-tts voice (e.g. `en-US-AriaNeural`) |
 | `/settemperature <0.0–2.0>` | Adjust LLM creativity / randomness |
 | `/settokens <int>` | Set maximum response length in tokens |
