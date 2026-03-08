@@ -1,0 +1,35 @@
+# ─── Core AI / LLM ────────────────────────────────────────────────────────────
+openai>=1.30.0          # OpenAI-compatible client (used for OpenRouter)
+httpx>=0.27.0           # Async HTTP – needed by openai SDK
+tiktoken>=0.7.0         # Token counting / context management
+
+# ─── Telegram Bot ─────────────────────────────────────────────────────────────
+python-telegram-bot>=21.0,<22.0   # Async Telegram bot framework
+
+# ─── Voice I/O ────────────────────────────────────────────────────────────────
+TTS>=0.22.0             # Coqui TTS (Sesame CSM-compatible)
+SpeechRecognition>=3.10.0
+pyaudio>=0.2.14         # Microphone capture
+pydub>=0.25.1           # Audio conversion utilities
+
+# ─── GitHub Integration (self-modification / Copilot-like access) ─────────────
+PyGithub>=2.3.0
+
+# ─── Anonymity / Tor ──────────────────────────────────────────────────────────
+stem>=1.8.2             # Tor control port library
+requests[socks]>=2.31.0 # SOCKS proxy support
+PySocks>=1.7.1
+
+# ─── Utilities ────────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0    # .env file loader
+PyYAML>=6.0.1           # YAML config parsing
+rich>=13.7.0            # Beautiful terminal output
+typer>=0.12.0           # CLI framework
+aiofiles>=23.2.1        # Async file I/O
+pydantic>=2.7.0         # Data validation / settings
+loguru>=0.7.2           # Advanced logging
+schedule>=1.2.0         # Periodic task scheduler
+paramiko>=3.4.0         # SSH (Codespace connector)
+
+# ─── Build (Windows .exe installer) ───────────────────────────────────────────
+pyinstaller>=6.6.0; sys_platform == "win32"
