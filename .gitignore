@@ -24,6 +24,8 @@ dist/
 *.log
 patch_history.json
 /tmp/
+orchestrator.log
+/repos/
 
 # IDE / editor
 .idea/
