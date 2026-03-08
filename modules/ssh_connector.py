@@ -34,12 +34,24 @@ class SSHConnector:
         user: Optional[str] = None,
         key_path: Optional[str] = None,
     ) -> bool:
-        """Open an SSH connection. Returns True on success."""
+        """Open an SSH connection. Returns True on success.
+
+        Only hosts present in ~/.ssh/known_hosts (or the system host key
+        store) are accepted. To add a new host, run:
+            ssh-keyscan <host> >> ~/.ssh/known_hosts
+        """
         try:
             import paramiko  # type: ignore
 
             client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.load_system_host_keys()
+            try:
+                client.load_host_keys(
+                    os.path.expanduser("~/.ssh/known_hosts")
+                )
+            except FileNotFoundError:
+                pass
+            client.set_missing_host_key_policy(paramiko.RejectPolicy())
             client.connect(
                 hostname=host or self.host,
                 port=port or self.port,
