@@ -10,7 +10,7 @@ Single-file Python installer that sets up and runs the full MirAI_OS stack:
   • Codespaces SSH orchestration
   • 200+ Kali Linux tool integrations
   • Full RPG game engine (characters, economy, quests, diplomacy, crafting)
-  • Multi-persona orchestrator with 50+ personas
+  • Multi-persona orchestrator with 25+ personas
   • Custom tkinter GUI (installer wizard + application dashboard)
 
 Usage
@@ -358,7 +358,7 @@ def install_kali_tools() -> str:
         return f"Kali tools install skipped: {exc}"
 
 
-def scan_available_tools() -> Dict[str, str]:
+def scan_available_tools() -> dict[str, str]:
     """Scan which Kali tools are available on PATH."""
     found: Dict[str, str] = {}
     for t in KALI_TOOLS:
@@ -392,7 +392,7 @@ def install_python_deps() -> str:
 
 # -- Full install orchestration -----------------------------------------------
 
-def run_full_install(cfg: Config | None = None) -> List[str]:
+def run_full_install(cfg: Config | None = None) -> list[str]:
     """Execute the entire installation sequence. Returns status messages."""
     cfg = cfg or CFG
     msgs: list[str] = []
@@ -447,7 +447,7 @@ class ContextOptimizer:
     def _total_chars(self) -> int:
         return sum(len(m["content"]) for m in self._messages)
 
-    def get_messages(self, system_prompt: str = "") -> List[Dict[str, str]]:
+    def get_messages(self, system_prompt: str = "") -> list[dict[str, str]]:
         msgs: list[dict[str, str]] = []
         if system_prompt:
             msgs.append({"role": "system", "content": system_prompt})
@@ -653,7 +653,11 @@ class CodespaceSSH:
             return "SSH_HOST not configured"
         try:
             client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.load_system_host_keys()
+            known_hosts = pathlib.Path.home() / ".ssh" / "known_hosts"
+            if known_hosts.exists():
+                client.load_host_keys(str(known_hosts))
+            client.set_missing_host_key_policy(paramiko.RejectPolicy())
             client.connect(hostname=host, username=user, key_filename=key_path)
             self._client = client
             return f"Connected to {user}@{host}"
@@ -707,7 +711,7 @@ class KaliToolManager:
         except Exception as exc:
             return f"Tool '{tool}' error: {exc}"
 
-    def list_tools(self) -> List[str]:
+    def list_tools(self) -> list[str]:
         return sorted(self.available.keys())
 
 
@@ -935,7 +939,7 @@ class Persona:
         return await self.llm.chat(query)
 
 
-def build_personas(cfg: Config | None = None) -> Dict[str, Persona]:
+def build_personas(cfg: Config | None = None) -> dict[str, Persona]:
     personas: dict[str, Persona] = {}
     for p in PERSONAS_DATA:
         personas[p["name"]] = Persona(
@@ -1011,7 +1015,7 @@ class Orchestrator:
             "Return a JSON array of 1-3 persona names best suited to answer."
         )
 
-    def _parse_names(self, raw: str) -> List[str]:
+    def _parse_names(self, raw: str) -> list[str]:
         try:
             match = re.search(r"\[.*?\]", raw, re.DOTALL)
             if match:
@@ -1204,7 +1208,7 @@ class Market:
                 return order
         return None
 
-    def get_prices(self, item: str) -> List[int]:
+    def get_prices(self, item: str) -> list[int]:
         return [p for _, p in self.price_history.get(item, [])]
 
 
@@ -1289,7 +1293,7 @@ class GameEngine:
             Recipe("Explorer Kit", {"WOOD": 2, "IRON": 1, "FOOD": 3}, "Explorer Kit", 1, "craft", 2),
         ]
 
-    def advance_time(self) -> List[str]:
+    def advance_time(self) -> list[str]:
         """Advance 1 game minute. Returns log entries."""
         events: list[str] = []
         self.game_minute += 1
@@ -1998,7 +2002,7 @@ def launch_gui(cfg: Config | None = None):
         f"{BANNER}\n"
         "All-in-One Python Installer & Runtime\n\n"
         "Features:\n"
-        "  • Multi-persona AI orchestrator (50+ characters)\n"
+        "  • Multi-persona AI orchestrator (25+ characters)\n"
         "  • RPG game engine with government, economy, quests\n"
         "  • Telegram bot with voice messaging\n"
         "  • Sesame CSM + Edge-TTS voice synthesis\n"
